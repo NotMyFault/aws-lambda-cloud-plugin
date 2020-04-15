@@ -49,7 +49,6 @@ public class LambdaProvisionerStrategy extends Strategy {
     }
 
     private StrategyDecision applyForCloud(@Nonnull NodeProvisioner.StrategyState state, LambdaCloud cloud) {
-
         final Label label = state.getLabel();
 
         if (!cloud.canProvision(label)) {
@@ -57,21 +56,21 @@ public class LambdaProvisionerStrategy extends Strategy {
         }
 
         LoadStatistics.LoadStatisticsSnapshot snapshot = state.getSnapshot();
-        LOGGER.info("Available executors={}, connecting={}, planned={}", ""+snapshot.getAvailableExecutors(), ""+snapshot.getConnectingExecutors(), ""+state.getPlannedCapacitySnapshot());
+        LOGGER.info("Available executors={}, connecting={}, planned={}", snapshot.getAvailableExecutors(),snapshot.getConnectingExecutors(), state.getPlannedCapacitySnapshot());
         int availableCapacity =
               snapshot.getAvailableExecutors()
             + snapshot.getConnectingExecutors()
             + state.getPlannedCapacitySnapshot();
 
         int currentDemand = snapshot.getQueueLength();
-        LOGGER.debug("Available capacity={0}, currentDemand={1}", ""+availableCapacity, ""+currentDemand);
+        LOGGER.debug("Available capacity={0}, currentDemand={1}", availableCapacity, currentDemand);
 
         if (availableCapacity < currentDemand) {
             Collection<NodeProvisioner.PlannedNode> plannedNodes = cloud.provision(label, currentDemand - availableCapacity);
             LOGGER.debug("Planned {0} new nodes", ""+plannedNodes.size());
             state.recordPendingLaunches(plannedNodes);
             availableCapacity += plannedNodes.size();
-            LOGGER.debug("After provisioning, available capacity={0}, currentDemand={1}", ""+availableCapacity, ""+currentDemand);
+            LOGGER.debug("After provisioning, available capacity={0}, currentDemand={1}", availableCapacity, currentDemand);
         }
 
         if (availableCapacity >= currentDemand) {
@@ -85,19 +84,26 @@ public class LambdaProvisionerStrategy extends Strategy {
 
     /**
      * Ping the nodeProvisioner as a new task enters the queue, so it can provision a LambdaAgent without delay.
+     *
      */
     @Extension
-    public static class LambdaProvisionning extends QueueListener {
+    public static class LambdaProvisioning extends QueueListener {
+
+        private static final Logger LOGGER = LoggerFactory.getLogger(LambdaProvisioning.class);
 
         @Override
         public void onEnterBuildable(Queue.BuildableItem item) {
+            LOGGER.debug("LambdaProvisioning - onEnterBuildable");
             final Jenkins jenkins = Jenkins.getActiveInstance();
             final Label label = item.getAssignedLabel();
             for (Cloud cloud : jenkins.clouds) {
+                LOGGER.debug("LambdaProvisioning - cloud : " + cloud.getDisplayName() + " - label : " + label);
                 if (cloud instanceof LambdaCloud && cloud.canProvision(label)) {
+                    LOGGER.debug("LambdaProvisioning - cloud can provision label " + label);
                     final NodeProvisioner provisioner = (label == null
                             ? jenkins.unlabeledNodeProvisioner
                             : label.nodeProvisioner);
+                    LOGGER.debug("LambdaProvisioning - provisoner " + provisioner.toString());
                     provisioner.suggestReviewNow();
                 }
             }

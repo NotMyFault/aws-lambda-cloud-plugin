@@ -22,20 +22,18 @@ import hudson.model.labels.LabelAtom;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.slaves.NodeProvisioner.PlannedNode;
+import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.servlet.ServletException;
 
 import jenkins.model.Jenkins;
 import jenkins.model.JenkinsLocationConfiguration;
@@ -103,6 +101,7 @@ public class LambdaCloud extends Cloud {
     @DataBoundConstructor
     public LambdaCloud(String name, @Nonnull String functionName, @Nullable String credentialsId,
         @Nonnull String region) throws InterruptedException {
+        // TODO: clouds.size is not really accurate for default name. rather use size of LambdaCloud clouds
         super(StringUtils.isNotBlank(name) ? name : "lambda_" + jenkins().clouds.size());
 
         this.functionName = functionName;
@@ -113,6 +112,12 @@ public class LambdaCloud extends Cloud {
             this.region = region;
         }
         LOGGER.info("[AWS Lambda Cloud]: Initializing Cloud: {}", this);
+    }
+
+    public static @Nonnull LambdaCloud getByName(@Nonnull String name) throws IllegalArgumentException {
+        Cloud cloud = Jenkins.getActiveInstance().clouds.getByName(name);
+        if (cloud instanceof LambdaCloud) return (LambdaCloud) cloud;
+        throw new IllegalArgumentException("'" + name + "' is not an AWS Lambda cloud but " + cloud);
     }
 
     /**
@@ -315,7 +320,7 @@ public class LambdaCloud extends Cloud {
             stillProvisioning);
 
         for (int i = 0; i < numToLaunch; i++) {
-            final String suffix = RandomStringUtils.randomAlphabetic(4);
+            final String suffix = RandomStringUtils.randomAlphabetic(6);
             //final String displayName = String.format("%s.cb-%s", functionName, suffix);
             final String displayName = String.format("%s.lambda-%s", functionName, suffix);
             final LambdaCloud cloud = this;
@@ -359,6 +364,8 @@ public class LambdaCloud extends Cloud {
 
     @Extension
     public static class DescriptorImpl extends Descriptor<Cloud> {
+
+        private static String CLOUD_NAME_PATTERN = "[a-z|A-Z|0-9|_|-]{1,127}";
 
         @Override
         public String getDisplayName() {
@@ -424,6 +431,13 @@ public class LambdaCloud extends Cloud {
 
         public String getDefaultRegion() {
             return LambdaCloud.getDefaultRegion();
+        }
+
+        public FormValidation doCheckName(@QueryParameter String value) throws IOException, ServletException {
+            if (value.length() > 0 && value.length() <= 127 && value.matches(CLOUD_NAME_PATTERN)) {
+                return FormValidation.ok();
+            }
+            return FormValidation.error("Up to 127 letters (uppercase and lowercase), numbers, hyphens, and underscores are allowed");
         }
     }
 }
