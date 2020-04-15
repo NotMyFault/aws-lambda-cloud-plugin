@@ -1,0 +1,24 @@
+
+# COMMONS
+*.log
+*.tmp
+tmp
+
+# MAVEN
+target/
+work/
+
+# INTELLIJ
+.idea/
+*.iml
+
+# Eclipse
+bin/
+.classpath
+.project
+.settings/
+pom.xml.versionsBackup
+.factorypath
+
+# VS Code
+.vscode
