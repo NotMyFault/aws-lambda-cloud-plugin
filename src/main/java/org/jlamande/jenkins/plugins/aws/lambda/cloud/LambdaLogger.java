@@ -1,4 +1,4 @@
-package org.jlamande.jenkins.plugins.awslambdacloud;
+package org.jlamande.jenkins.plugins.aws.lambda.cloud;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -13,12 +13,10 @@ import hudson.tasks.BuildWrapperDescriptor;
 import java.io.IOException;
 import java.util.Arrays;
 
+import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildWrapper;
 
 import org.kohsuke.stapler.DataBoundConstructor;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * LambdaLogger class.
@@ -51,7 +49,7 @@ public final class LambdaLogger extends SimpleBuildWrapper {
     @Override
     public void setUp(Context context, Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener,
         EnvVars initialEnvironment) throws IOException, InterruptedException {
-        Computer cpu = Arrays.asList(LambdaCloud.jenkins().getComputers()).stream()
+        Computer cpu = Arrays.asList(Jenkins.getActiveInstance().getComputers()).stream()
             .filter(c -> c.getChannel() == launcher.getChannel()).findFirst().get();
         if (cpu instanceof LambdaComputer) {
             LambdaComputer cbCpu = (LambdaComputer) cpu;

@@ -1,4 +1,4 @@
-package org.jlamande.jenkins.plugins.awslambdacloud;
+package org.jlamande.jenkins.plugins.aws.lambda.cloud;
 
 import com.amazonaws.services.lambda.model.InvokeRequest;
 import com.amazonaws.services.lambda.model.InvokeResult;
@@ -16,6 +16,7 @@ import java.util.Base64;
 
 import javax.annotation.Nonnull;
 
+import jenkins.model.Jenkins;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,9 +97,9 @@ public class LambdaLauncher extends JNLPLauncher {
             LOGGER.error("[AWS Lambda Cloud]: Exception while starting build: {}", e.getMessage(), e);
             listener.fatalError("Exception while starting build: %s", e.getMessage());
 
-            if (node instanceof LambdaAgent) {
+            if (node instanceof LambdaNode) {
                 try {
-                    LambdaCloud.jenkins().removeNode(node);
+                    Jenkins.getActiveInstance().removeNode(node);
                 } catch (IOException e1) {
                     LOGGER.error("Failed to terminate agent: {}", node.getDisplayName(), e);
                 }

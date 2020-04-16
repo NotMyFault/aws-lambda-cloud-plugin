@@ -1,16 +1,13 @@
-package org.jlamande.jenkins.plugins.awslambdacloud;
+package org.jlamande.jenkins.plugins.aws.lambda.cloud;
 
 import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Queue;
 import hudson.slaves.AbstractCloudComputer;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.concurrent.Future;
-
 import javax.annotation.Nonnull;
 
+import jenkins.model.Jenkins;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +16,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author jlamande
  */
-public class LambdaComputer extends AbstractCloudComputer<LambdaAgent> {
+public class LambdaComputer extends AbstractCloudComputer<LambdaNode> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LambdaComputer.class);
 
@@ -31,9 +28,9 @@ public class LambdaComputer extends AbstractCloudComputer<LambdaAgent> {
     /**
     * Constructor for LambdaComputer.
     *
-    * @param agent a {@link LambdaAgent} object.
+    * @param agent a {@link LambdaNode} object.
     */
-    public LambdaComputer(LambdaAgent agent) {
+    public LambdaComputer(LambdaNode agent) {
         super(agent);
         this.cloud = agent.getCloud();
     }
@@ -71,20 +68,21 @@ public class LambdaComputer extends AbstractCloudComputer<LambdaAgent> {
     private void gracefulShutdown() {
         setAcceptingTasks(false);
 
-        Future<Object> next = Computer.threadPoolForRemoting.submit(() -> {
+        //Future<Object> next =
+        Computer.threadPoolForRemoting.submit(() -> {
             LOGGER.info("[AWS Lambda Cloud]: [{}]: Terminating agent after task.", this);
             try {
                 Thread.sleep(500);
-                LambdaCloud.jenkins().removeNode(getNode());
+                Jenkins.getActiveInstance().removeNode(getNode());
             } catch (Exception e) {
                 LOGGER.info("[AWS Lambda Cloud]: [{}]: Termination error: {}", this, e.getClass());
             }
             return null;
         });
-        try {
-            next.notify();
-        } catch (java.lang.IllegalMonitorStateException e) {
-            LOGGER.warn("exception during shutdown");
-        }
+        //try {
+        //    next.notify();
+        //} catch (java.lang.IllegalMonitorStateException e) {
+        //    LOGGER.warn("exception during shutdown ", e);
+        //}
     }
 }

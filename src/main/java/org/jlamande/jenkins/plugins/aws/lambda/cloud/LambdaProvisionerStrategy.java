@@ -1,4 +1,4 @@
-package org.jlamande.jenkins.plugins.awslambdacloud;
+package org.jlamande.jenkins.plugins.aws.lambda.cloud;
 
 import hudson.Extension;
 import hudson.model.Label;
@@ -54,6 +54,7 @@ public class LambdaProvisionerStrategy extends Strategy {
         if (!cloud.canProvision(label)) {
             return CONSULT_REMAINING_STRATEGIES;
         }
+        LOGGER.info("[AWS Lambda Cloud]: Can provision capabilities for label '{}'", label);
 
         LoadStatistics.LoadStatisticsSnapshot snapshot = state.getSnapshot();
         LOGGER.info("Available executors={}, connecting={}, planned={}", snapshot.getAvailableExecutors(),snapshot.getConnectingExecutors(), state.getPlannedCapacitySnapshot());
@@ -83,7 +84,7 @@ public class LambdaProvisionerStrategy extends Strategy {
     }
 
     /**
-     * Ping the nodeProvisioner as a new task enters the queue, so it can provision a LambdaAgent without delay.
+     * Ping the nodeProvisioner as a new task enters the queue, so it can provision a LambdaNode without delay.
      *
      */
     @Extension
@@ -103,7 +104,7 @@ public class LambdaProvisionerStrategy extends Strategy {
                     final NodeProvisioner provisioner = (label == null
                             ? jenkins.unlabeledNodeProvisioner
                             : label.nodeProvisioner);
-                    LOGGER.debug("LambdaProvisioning - provisoner " + provisioner.toString());
+                    LOGGER.debug("LambdaProvisioning - provisioner " + provisioner.toString());
                     provisioner.suggestReviewNow();
                 }
             }

@@ -1,4 +1,4 @@
-package org.jlamande.jenkins.plugins.awslambdacloud;
+package org.jlamande.jenkins.plugins.aws.lambda.cloud;
 
 import hudson.model.Descriptor;
 import hudson.model.TaskListener;
@@ -12,8 +12,6 @@ import java.util.Collections;
 
 import javax.annotation.Nonnull;
 
-import org.apache.commons.lang.StringUtils;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,25 +19,25 @@ import org.slf4j.LoggerFactory;
  *
  * https://javadoc.jenkins.io/hudson/slaves/AbstractCloudSlave.html
  */
-class LambdaAgent extends AbstractCloudSlave {
+class LambdaNode extends AbstractCloudSlave {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LambdaAgent.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LambdaNode.class);
 
     private static final long serialVersionUID = -6722929807051421839L;
 
     private final transient LambdaCloud cloud;
 
     /**
-    * Creates a new LambdaAgent node that provisions a
+    * Creates a new LambdaNode node that provisions a
     * {@link LambdaComputer}.
     *
     * @param cloud    a {@link LambdaCloud} object.
     * @param name     the name of the agent.
     * @param launcher a {@link hudson.slaves.ComputerLauncher} object.
-    * @throws hudson.model.Descriptor$FormException if any.
+    * @throws hudson.model.Descriptor.FormException if any.
     * @throws java.io.IOException                   if any.
     */
-    public LambdaAgent(@Nonnull LambdaCloud cloud, @Nonnull String name, @Nonnull ComputerLauncher launcher)
+    public LambdaNode(@Nonnull LambdaCloud cloud, @Nonnull String name, @Nonnull ComputerLauncher launcher)
         throws Descriptor.FormException, IOException {
         // TODO : review
         // - mode : Mode.NORMAL, Mode.EXCLUSIVE
@@ -61,7 +59,7 @@ class LambdaAgent extends AbstractCloudSlave {
 
     /** {@inheritDoc} */
     @Override
-    public AbstractCloudComputer<LambdaAgent> createComputer() {
+    public AbstractCloudComputer<LambdaNode> createComputer() {
         return new LambdaComputer(this);
     }
 
