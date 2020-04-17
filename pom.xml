@@ -25,7 +25,7 @@
         <relativePath />
     </parent>
 
-    <groupId>org.jlamande.jenkins.plugins</groupId>
+    <groupId>io.jenkins.plugins</groupId>
     <artifactId>aws-lambda-cloud</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>hpi</packaging>

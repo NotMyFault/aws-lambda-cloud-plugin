@@ -23,4 +23,4 @@ By default Jenkins do estimate load to avoid over-provisioning of cloud nodes.
 This plugin will use its own provisioning strategy by default, with this strategy, a new node is created on Lambda as soon as NodeProvisioner detects need for more agents.
 In worse scenarios, this will results in some extra nodes provisioned on Lambda, which will be shortly terminated.
 
-If you want to turn off this Strategy you can set SystemProperty `io.jenkins.plugins.aws.lambda.cloud.disableLambdaCloudProvisionerStrategy=true`
+If you want to turn off this Strategy you can set SystemProperty `io.jenkins.plugins.aws.lambda.cloud.lambdaCloudProvisionerStrategy.disable=true`
