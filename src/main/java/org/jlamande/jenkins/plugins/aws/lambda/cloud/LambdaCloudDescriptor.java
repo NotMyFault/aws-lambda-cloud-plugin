@@ -42,6 +42,7 @@ public class LambdaCloudDescriptor extends Descriptor<Cloud> {
         return LambdaCloud.getDefaultAgentTimeout();
     }
 
+    // TODO: fix as reviewed
     public ListBoxModel doFillCredentialsIdItems() {
         return AWSCredentialsHelper.doFillCredentialsIdItems(Jenkins.getActiveInstance());
     }

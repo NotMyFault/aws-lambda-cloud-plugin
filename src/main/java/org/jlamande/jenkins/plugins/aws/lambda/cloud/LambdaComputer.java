@@ -1,6 +1,5 @@
 package org.jlamande.jenkins.plugins.aws.lambda.cloud;
 
-import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Queue;
 import hudson.slaves.AbstractCloudComputer;
@@ -20,19 +19,17 @@ public class LambdaComputer extends AbstractCloudComputer<LambdaNode> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LambdaComputer.class);
 
-    private String buildId;
-
     @Nonnull
     private final LambdaCloud cloud;
 
     /**
     * Constructor for LambdaComputer.
     *
-    * @param agent a {@link LambdaNode} object.
+    * @param node a {@link LambdaNode} object.
     */
-    public LambdaComputer(LambdaNode agent) {
-        super(agent);
-        this.cloud = agent.getCloud();
+    public LambdaComputer(LambdaNode node) {
+        super(node);
+        this.cloud = node.getCloud();
     }
 
     /** {@inheritDoc} */
@@ -40,6 +37,7 @@ public class LambdaComputer extends AbstractCloudComputer<LambdaNode> {
     public void taskAccepted(Executor executor, Queue.Task task) {
         super.taskAccepted(executor, task);
         LOGGER.info("[AWS Lambda Cloud]: [{}]: Task in job '{}' accepted", this, task.getFullDisplayName());
+        LOGGER.info("[AWS Lambda Cloud]: [{}] -  online : {} - isAcceptingTasks : {}", this, this.isOnline(), this.isAcceptingTasks());
     }
 
     /** {@inheritDoc} */
@@ -69,16 +67,16 @@ public class LambdaComputer extends AbstractCloudComputer<LambdaNode> {
         setAcceptingTasks(false);
 
         //Future<Object> next =
-        Computer.threadPoolForRemoting.submit(() -> {
+        //Computer.threadPoolForRemoting.submit(() -> {
             LOGGER.info("[AWS Lambda Cloud]: [{}]: Terminating agent after task.", this);
             try {
-                Thread.sleep(500);
+                // Thread.sleep(500);
                 Jenkins.getActiveInstance().removeNode(getNode());
             } catch (Exception e) {
                 LOGGER.info("[AWS Lambda Cloud]: [{}]: Termination error: {}", this, e.getClass());
             }
-            return null;
-        });
+            //return null;
+        //});
         //try {
         //    next.notify();
         //} catch (java.lang.IllegalMonitorStateException e) {

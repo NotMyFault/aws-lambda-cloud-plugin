@@ -11,11 +11,10 @@ import hudson.model.Node;
 import hudson.model.labels.LabelAtom;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
-import hudson.slaves.NodeProvisioner.PlannedNode;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.Future;
+import java.util.concurrent.Callable;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -45,7 +44,9 @@ public class LambdaCloud extends Cloud {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LambdaCloud.class);
 
-    private static final int DEFAULT_AGENT_TIMEOUT = 120;
+    private static final int DEFAULT_AGENT_TIMEOUT = 60;
+
+    private static final int DEFAULT_MAX_CONCURRENT_EXECUTIONS = 2;
 
     private static final String DEFAULT_REGION = "us-east-1";
 
@@ -66,7 +67,12 @@ public class LambdaCloud extends Cloud {
 
     private String jenkinsUrl;
 
+    private int maxConcurrentExecutions;
+
     private int agentTimeout;
+
+    @Nonnull
+    private List<LambdaFunction> functions = null;
 
     /**
     * https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/lambda/AWSLambda.html
@@ -98,7 +104,7 @@ public class LambdaCloud extends Cloud {
         } else {
             this.region = region;
         }
-        this.client = LambdaClient.buildClient(credentialsId, region);
+        this.client = LambdaClient.buildClient(this.credentialsId, this.region);
         LOGGER.info("[AWS Lambda Cloud]: Initializing Cloud: {}", this);
     }
 
@@ -220,6 +226,31 @@ public class LambdaCloud extends Cloud {
     }
 
     /**
+     * Getter for the field <code>maxConcurrentExecutions</code>.
+     *
+     * @return a int.
+     */
+    @Nonnull
+    public int getMaxConcurrentExecutions() {
+        return maxConcurrentExecutions == 0 ? DEFAULT_MAX_CONCURRENT_EXECUTIONS : maxConcurrentExecutions;
+    }
+
+    /**
+     * Setter for the field <code>maxConcurrentExecutions</code>.
+     *
+     * @param maxConcurrentExecutions a int.
+     */
+    @DataBoundSetter
+    public void setMaxConcurrentExecutions(int maxConcurrentExecutions) {
+        this.maxConcurrentExecutions = maxConcurrentExecutions;
+    }
+
+    @DataBoundSetter
+    public void setFunctions(List<LambdaFunction> functions) {
+        this.functions = functions;
+    }
+
+    /**
     * Getter for the field <code>client</code>.
     *
     * @return a {@link com.amazonaws.services.lambda.AWSLambda} object.
@@ -237,20 +268,24 @@ public class LambdaCloud extends Cloud {
      * Clear all CodeBuilder nodes on boot-up because these cannot be permanent.
      */
     private static void clearAllNodes() {
-        List<Node> nodes = Jenkins.getActiveInstance().getNodes();
-        if (nodes.size() == 0) {
-            return;
-        }
+        try {
+            List<Node> nodes = Jenkins.getActiveInstance().getNodes();
+            if (nodes.size() == 0) {
+                return;
+            }
 
-        LOGGER.info("[AWS Lambda Cloud]: Clearing all previous Lambda nodes...");
-        for (final Node n : nodes) {
-            if (n instanceof LambdaNode) {
-                try {
-                    ((LambdaNode) n).terminate();
-                } catch (InterruptedException | IOException e) {
-                    LOGGER.error("[AWS Lambda Cloud]: Failed to terminate agent '{}'", n.getDisplayName(), e);
+            LOGGER.info("[AWS Lambda Cloud]: Clearing all previous Lambda nodes...");
+            for (final Node n : nodes) {
+                if (n instanceof LambdaNode) {
+                    try {
+                        ((LambdaNode) n).terminate();
+                    } catch (InterruptedException | IOException e) {
+                        LOGGER.error("[AWS Lambda Cloud]: Failed to terminate agent '{}'", n.getDisplayName(), e);
+                    }
                 }
             }
+        } catch(IllegalStateException e) {
+            LOGGER.warn("Illegal state : {}", e.getMessage());
         }
     }
 
@@ -260,55 +295,83 @@ public class LambdaCloud extends Cloud {
         return label == null ? false : label.matches(Arrays.asList(new LabelAtom(getLabel())));
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public synchronized Collection<PlannedNode> provision(Label label, int excessWorkload) {
-        List<NodeProvisioner.PlannedNode> list = new ArrayList<NodeProvisioner.PlannedNode>();
-
-        // guard against non-matching labels
-        if (label != null && !label.matches(Arrays.asList(new LabelAtom(getLabel())))) {
-            return list;
+    private LambdaFunction getFunction(Label label) {
+        if (label == null) {
+            return null;
         }
+        for (LambdaFunction t : getFunctions()) {
+            if (label.matches(t.getLabelSet())) {
+                return t;
+            }
+        }
+        return null;
+    }
+
+    @Nonnull
+    public List<LambdaFunction> getFunctions() {
+        return functions != null ? functions : Collections.<LambdaFunction> emptyList();
+    }
+
+    @Override
+    public synchronized Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
+        List<NodeProvisioner.PlannedNode> nodesList = new ArrayList<NodeProvisioner.PlannedNode>();
 
         // guard against double-provisioning with a 500ms cooldown clock
         long timeDiff = System.currentTimeMillis() - lastProvisionTime;
         if (timeDiff < 500) {
             LOGGER.info("[AWS Lambda Cloud]: Provision of {} skipped, still on cooldown ({}ms of 500ms)", excessWorkload,
                 timeDiff);
-            return list;
+            return nodesList;
         }
 
-        String labelName = label == null ? getLabel() : label.getDisplayName();
-        long stillProvisioning = numStillProvisioning();
-        long numToLaunch = Math.max(excessWorkload - stillProvisioning, 0);
-        LOGGER.info("[AWS Lambda Cloud]: Provisioning {} nodes for label '{}' ({} already provisioning)", numToLaunch, labelName,
-            stillProvisioning);
+        try {
+            LOGGER.info("Asked to provision {} node(s) for: {}", excessWorkload, label);
 
-        for (int i = 0; i < numToLaunch; i++) {
-            final String suffix = RandomStringUtils.randomAlphabetic(6);
-            //final String displayName = String.format("%s.cb-%s", functionName, suffix);
-            final String displayName = String.format("%s.lambda-%s", functionName, suffix);
-            final LambdaCloud cloud = this;
-            final Future<Node> nodeResolver = Computer.threadPoolForRemoting.submit(() -> {
-                LambdaLauncher launcher = new LambdaLauncher(cloud);
-                LambdaNode agent = new LambdaNode(cloud, displayName, launcher);
-                Jenkins.getActiveInstance().addNode(agent);
-                return agent;
-            });
-            list.add(new NodeProvisioner.PlannedNode(displayName, nodeResolver, 1));
+
+            //final LambdaFunction function = getFunction(label);
+            final LambdaFunction function = new LambdaFunction(this.functionName, label.getName());
+
+            for (int i = 1; i <= excessWorkload; i++) {
+                // String agentName = name + "-" + label.getName() + "-" + RandomStringUtils.random(5, "bcdfghjklmnpqrstvwxz0123456789");
+                final String suffix = RandomStringUtils.randomAlphabetic(6);
+                final String nodeName = String.format("%s.lambda-%s", label.getName(), suffix);
+                LOGGER.info("Will provision {}, for label: {}", nodeName, label);
+                nodesList.add(
+                    new NodeProvisioner.PlannedNode(
+                        nodeName,
+                        Computer.threadPoolForRemoting.submit(
+                            new ProvisioningCallback(this, function, nodeName)
+                        ),
+                        1
+                    )
+                );
+            }
+            lastProvisionTime = System.currentTimeMillis();
+            return nodesList;
+        } catch (Exception e) {
+            LOGGER.warn("Failed to provision Lambda node", e);
         }
-
-        lastProvisionTime = System.currentTimeMillis();
-        return list;
+        return Collections.emptyList();
     }
 
-    /**
-    * Find the number of {@link LambdaNode} instances still connecting to
-    * Jenkins host.
-    */
-    private long numStillProvisioning() {
-        return Jenkins.getActiveInstance().getNodes().stream().filter(LambdaNode.class::isInstance).map(LambdaNode.class::cast)
-            .filter(a -> a.getLauncher().isLaunchSupported()).count();
+    private class ProvisioningCallback implements Callable<Node> {
+
+        private final LambdaCloud cloud;
+        private final LambdaFunction function;
+        private final String nodeName;
+
+        ProvisioningCallback(LambdaCloud cloud, LambdaFunction function, String nodeName) {
+            this.cloud = cloud;
+            this.function = function;
+            this.nodeName = nodeName;
+        }
+
+        public Node call() throws Exception {
+            LambdaComputerLauncher launcher = new LambdaComputerLauncher(cloud);
+            LambdaNode agent = new LambdaNode(cloud, nodeName, launcher);
+            Jenkins.getActiveInstance().addNode(agent);
+            return agent;
+        }
     }
 
     @Extension

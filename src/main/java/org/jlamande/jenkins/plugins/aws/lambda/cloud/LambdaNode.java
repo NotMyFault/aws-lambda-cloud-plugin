@@ -44,7 +44,7 @@ class LambdaNode extends AbstractCloudSlave {
         // - timeout
         // https://javadoc.jenkins.io/hudson/slaves/CloudSlaveRetentionStrategy.html
         super(name, "AWS Lambda Agent", "/tmp", 1, Mode.NORMAL, cloud.getLabel(), launcher,
-            new CloudRetentionStrategy(cloud.getAgentTimeout() / 60 + 1), Collections.emptyList());
+            new CloudRetentionStrategy(cloud.getAgentTimeout() / 60), Collections.emptyList());
         this.cloud = cloud;
     }
 
@@ -63,10 +63,10 @@ class LambdaNode extends AbstractCloudSlave {
         return new LambdaComputer(this);
     }
 
-  /** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
     protected void _terminate(TaskListener listener) throws IOException, InterruptedException {
-        listener.getLogger().println("[AWS Lambda Cloud]: Terminating agent: " + getDisplayName());
-        LOGGER.info("[AWS Lambda Cloud]: Terminating agent: {}", getDisplayName());
+        listener.getLogger().println("[AWS Lambda Cloud]: Terminating node: " + getDisplayName());
+        LOGGER.info("[AWS Lambda Cloud]: Terminating node: {}", getDisplayName());
     }
 }

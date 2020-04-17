@@ -16,3 +16,11 @@ Each Jenkins build is executed on a Lambda execution that is released at the end
 Given the limitations of the AWS Lambda engine :
 - jobs can't exceed a duration of 15 minutes
 - jobs can't use more than 512 MB of storage
+
+## No delay provisioning
+
+By default Jenkins do estimate load to avoid over-provisioning of cloud nodes.
+This plugin will use its own provisioning strategy by default, with this strategy, a new node is created on Lambda as soon as NodeProvisioner detects need for more agents.
+In worse scenarios, this will results in some extra nodes provisioned on Lambda, which will be shortly terminated.
+
+If you want to turn off this Strategy you can set SystemProperty `io.jenkins.plugins.aws.lambda.cloud.disableLambdaCloudProvisionerStrategy=true`
