@@ -24,3 +24,25 @@ This plugin will use its own provisioning strategy by default, with this strateg
 In worse scenarios, this will results in some extra nodes provisioned on Lambda, which will be shortly terminated.
 
 If you want to turn off this Strategy you can set SystemProperty `io.jenkins.plugins.aws.lambda.cloud.lambdaCloudProvisionerStrategy.disable=true`
+
+## How-to
+
+### Configure this plugin as code
+
+Simple configuration using default credentials and default region if Jenkins is running as an ECS task or an EC2 instance :
+
+```groovy
+import io.jenkins.plugins.aws.lambda.cloud.LambdaCloud;
+import io.jenkins.plugins.aws.lambda.cloud.LambdaFunction;
+
+import jenkins.model.Jenkins
+
+jenkins = jenkins.model.Jenkins.get()
+
+println "Configure Lambda Cloud"
+c = new LambdaCloud("aws-lambdas", null, '')
+f = new LambdaFunction('lambda-jnlp-agent', "test");
+c.setFunctions([f, f2, f3]);
+jenkins.clouds.add(c);
+jenkins.save()
+```
