@@ -42,7 +42,7 @@ jenkins = jenkins.model.Jenkins.get()
 println "Configure Lambda Cloud"
 c = new LambdaCloud("aws-lambdas", null, '')
 f = new LambdaFunction('lambda-jnlp-agent', "test");
-c.setFunctions([f, f2, f3]);
+c.setFunctions([f]);
 jenkins.clouds.add(c);
 jenkins.save()
 ```
