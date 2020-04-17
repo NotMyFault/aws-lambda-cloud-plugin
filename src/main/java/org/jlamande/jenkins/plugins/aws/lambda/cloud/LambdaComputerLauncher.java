@@ -70,9 +70,9 @@ public class LambdaComputerLauncher extends JNLPLauncher {
             return;
         }
 
-        LOGGER.info("[AWS Lambda Cloud]: Is computer accepting tasks ? {}", computer.isAcceptingTasks());
-        LOGGER.info("[AWS Lambda Cloud]: Is node accepting tasks ? {}", node.isAcceptingTasks());
-        LOGGER.info("[AWS Lambda Cloud]: already launched ? {}", launched);
+        LOGGER.debug("[AWS Lambda Cloud]: Is computer accepting tasks ? {}", computer.isAcceptingTasks());
+        LOGGER.debug("[AWS Lambda Cloud]: Is node accepting tasks ? {}", node.isAcceptingTasks());
+        LOGGER.debug("[AWS Lambda Cloud]: already launched ? {}", launched);
 
         if (launched) {
             LOGGER.info("[{}]: Agent has already been launched, activating", node.getNodeName());
@@ -90,7 +90,7 @@ public class LambdaComputerLauncher extends JNLPLauncher {
 
         try {
             InvokeResult result = cloud.getClient().invoke(request);
-            LOGGER.info("[AWS Lambda Cloud]: Launcher - Invocation status: {}", result.getStatusCode());
+            LOGGER.debug("[AWS Lambda Cloud]: Launcher - Invocation status: {}", result.getStatusCode());
             // status codes
             // 200 : successful synchronous invocation
             // 202 : successful asynchronous invocation

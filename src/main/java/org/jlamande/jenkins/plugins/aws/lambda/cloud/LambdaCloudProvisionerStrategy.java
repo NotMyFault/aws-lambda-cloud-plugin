@@ -82,7 +82,7 @@ public class LambdaCloudProvisionerStrategy extends Strategy {
 
             for (NodeProvisioner.PlannedNode ac : additionalCapacities) {
                 excessWorkload -= ac.numExecutors;
-                LOGGER.info( "Started provisioning {} from {} with {} "
+                LOGGER.debug( "Started provisioning {} from {} with {} "
                         + "executors. Remaining excess workload: {}",
                     ac.displayName, c.name, ac.numExecutors, excessWorkload);
             }
@@ -129,7 +129,7 @@ public class LambdaCloudProvisionerStrategy extends Strategy {
                     final NodeProvisioner provisioner = (label == null
                             ? jenkins.unlabeledNodeProvisioner
                             : label.nodeProvisioner);
-                    LOGGER.debug("LambdaProvisioningQueueListener - provisioner " + provisioner.toString());
+                    LOGGER.debug("LambdaProvisioningQueueListener - provisioner for label {} ", provisioner.toString(), label);
                     provisioner.suggestReviewNow();
                 }
             }

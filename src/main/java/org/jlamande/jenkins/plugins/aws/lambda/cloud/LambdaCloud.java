@@ -325,7 +325,7 @@ public class LambdaCloud extends Cloud {
         }
 
         try {
-            LOGGER.info("Asked to provision {} node(s) for: {}", excessWorkload, label);
+            LOGGER.debug("Asked to provision {} node(s) for: {}", excessWorkload, label);
 
 
             //final LambdaFunction function = getFunction(label);

@@ -36,15 +36,15 @@ public class LambdaComputer extends AbstractCloudComputer<LambdaNode> {
     @Override
     public void taskAccepted(Executor executor, Queue.Task task) {
         super.taskAccepted(executor, task);
-        LOGGER.info("[AWS Lambda Cloud]: [{}]: Task in job '{}' accepted", this, task.getFullDisplayName());
-        LOGGER.info("[AWS Lambda Cloud]: [{}] -  online : {} - isAcceptingTasks : {}", this, this.isOnline(), this.isAcceptingTasks());
+        LOGGER.debug("[AWS Lambda Cloud]: [{}]: Task in job '{}' accepted", this, task.getFullDisplayName());
+        LOGGER.debug("[AWS Lambda Cloud]: [{}] -  online : {} - isAcceptingTasks : {}", this, this.isOnline(), this.isAcceptingTasks());
     }
 
     /** {@inheritDoc} */
     @Override
     public void taskCompleted(Executor executor, Queue.Task task, long durationMS) {
         super.taskCompleted(executor, task, durationMS);
-        LOGGER.info("[AWS Lambda Cloud]: [{}]: Task in job '{}' completed in {}ms", this, task.getFullDisplayName(), durationMS);
+        LOGGER.debug("[AWS Lambda Cloud]: [{}]: Task in job '{}' completed in {}ms", this, task.getFullDisplayName(), durationMS);
         gracefulShutdown();
     }
 
@@ -73,7 +73,7 @@ public class LambdaComputer extends AbstractCloudComputer<LambdaNode> {
                 // Thread.sleep(500);
                 Jenkins.getActiveInstance().removeNode(getNode());
             } catch (Exception e) {
-                LOGGER.info("[AWS Lambda Cloud]: [{}]: Termination error: {}", this, e.getClass());
+                LOGGER.warn("[AWS Lambda Cloud]: [{}]: Termination error: {}", this, e.getClass());
             }
             //return null;
         //});
