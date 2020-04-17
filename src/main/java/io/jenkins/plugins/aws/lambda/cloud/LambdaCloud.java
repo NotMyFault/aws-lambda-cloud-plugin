@@ -212,7 +212,6 @@ public class LambdaCloud extends Cloud {
 
     @DataBoundSetter
     public void setFunctions(List<LambdaFunction> functions) {
-        System.out.println("SET FUNCTIONS " + functions);
         this.functions = functions;
     }
 
@@ -266,7 +265,6 @@ public class LambdaCloud extends Cloud {
             return null;
         }
         for (LambdaFunction f : getFunctions()) {
-            System.out.println(f.getLabelSet());
             if (label.matches(f.getLabelSet())) {
                 return f;
             }
