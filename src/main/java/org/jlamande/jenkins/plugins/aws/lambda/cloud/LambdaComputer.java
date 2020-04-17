@@ -36,7 +36,7 @@ public class LambdaComputer extends AbstractCloudComputer<LambdaNode> {
     @Override
     public void taskAccepted(Executor executor, Queue.Task task) {
         super.taskAccepted(executor, task);
-        LOGGER.debug("[AWS Lambda Cloud]: [{}]: Task in job '{}' accepted", this, task.getFullDisplayName());
+        LOGGER.info("[AWS Lambda Cloud]: [{}]: Task in job '{}' accepted", this, task.getFullDisplayName());
         LOGGER.debug("[AWS Lambda Cloud]: [{}] -  online : {} - isAcceptingTasks : {}", this, this.isOnline(), this.isAcceptingTasks());
     }
 

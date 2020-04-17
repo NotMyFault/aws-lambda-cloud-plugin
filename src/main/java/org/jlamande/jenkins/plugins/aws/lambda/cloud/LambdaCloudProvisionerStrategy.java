@@ -129,7 +129,7 @@ public class LambdaCloudProvisionerStrategy extends Strategy {
                     final NodeProvisioner provisioner = (label == null
                             ? jenkins.unlabeledNodeProvisioner
                             : label.nodeProvisioner);
-                    LOGGER.debug("LambdaProvisioningQueueListener - provisioner for label {} ", provisioner.toString(), label);
+                    LOGGER.info("LambdaProvisioningQueueListener - provisioner for label {} ", provisioner.toString(), label);
                     provisioner.suggestReviewNow();
                 }
             }
