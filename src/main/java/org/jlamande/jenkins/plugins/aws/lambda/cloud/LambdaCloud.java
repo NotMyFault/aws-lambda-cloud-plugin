@@ -55,15 +55,10 @@ public class LambdaCloud extends Cloud {
     }
 
     @Nonnull
-    private final String functionName;
-
-    @Nonnull
     private final String credentialsId;
 
     @Nonnull
     private final String region;
-
-    private String label;
 
     private String jenkinsUrl;
 
@@ -71,8 +66,7 @@ public class LambdaCloud extends Cloud {
 
     private int agentTimeout;
 
-    @Nonnull
-    private List<LambdaFunction> functions = null;
+    private List<LambdaFunction> functions;
 
     /**
     * https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/lambda/AWSLambda.html
@@ -84,20 +78,17 @@ public class LambdaCloud extends Cloud {
     *
     * @param name          the name of the cloud or null if you want it
     *                      auto-generated.
-    * @param functionName   the name of the AWS Lambda function to build from.
     * @param credentialsId the credentials ID to use or null/empty if pulled from
     *                      environment.
     * @param region        the AWS region to use.
     * @throws InterruptedException if any.
     */
     @DataBoundConstructor
-    public LambdaCloud(@Nonnull String name, @Nonnull String functionName, @Nullable String credentialsId,
+    public LambdaCloud(@Nonnull String name, @Nullable String credentialsId,
         @Nonnull String region) throws InterruptedException {
         // TODO: clouds.size is not really accurate for default name. rather use size of LambdaCloud clouds
         //super(StringUtils.isNotBlank(name) ? name : "lambda_" + Jenkins.getActiveInstance().clouds.size());
         super(name);
-
-        this.functionName = functionName;
         this.credentialsId = StringUtils.defaultIfBlank(credentialsId, "");
         if (StringUtils.isBlank(region)) {
             this.region = getDefaultRegion();
@@ -117,7 +108,7 @@ public class LambdaCloud extends Cloud {
     /** {@inheritDoc} */
     @Override
     public String toString() {
-        return String.format("%s<%s>", name, functionName);
+        return String.format("%s", name);
     }
 
 
@@ -134,16 +125,6 @@ public class LambdaCloud extends Cloud {
     }
 
     /**
-    * Getter for the field <code>functionName</code>.
-    *
-    * @return a {@link String} object.
-    */
-    @Nonnull
-    public String getFunctionName() {
-        return functionName;
-    }
-
-    /**
     * Getter for the field <code>region</code>.
     *
     * @return a {@link String} object.
@@ -151,26 +132,6 @@ public class LambdaCloud extends Cloud {
     @Nonnull
     public String getRegion() {
         return region;
-    }
-
-    /**
-    * Getter for the field <code>label</code>.
-    *
-    * @return a {@link String} object.
-    */
-    @Nonnull
-    public String getLabel() {
-        return StringUtils.defaultIfBlank(label, "");
-    }
-
-    /**
-    * Setter for the field <code>label</code>.
-    *
-    * @param label a {@link String} object.
-    */
-    @DataBoundSetter
-    public void setLabel(String label) {
-        this.label = label;
     }
 
     /**
@@ -245,8 +206,14 @@ public class LambdaCloud extends Cloud {
         this.maxConcurrentExecutions = maxConcurrentExecutions;
     }
 
+    @Nonnull
+    public List<LambdaFunction> getFunctions() {
+        return functions != null ? functions : Collections.<LambdaFunction> emptyList();
+    }
+
     @DataBoundSetter
     public void setFunctions(List<LambdaFunction> functions) {
+        System.out.println("SET FUNCTIONS " + functions);
         this.functions = functions;
     }
 
@@ -292,24 +259,20 @@ public class LambdaCloud extends Cloud {
     /** {@inheritDoc} */
     @Override
     public boolean canProvision(Label label) {
-        return label == null ? false : label.matches(Arrays.asList(new LabelAtom(getLabel())));
+        return getFunction(label)!= null;
     }
 
     private LambdaFunction getFunction(Label label) {
         if (label == null) {
             return null;
         }
-        for (LambdaFunction t : getFunctions()) {
-            if (label.matches(t.getLabelSet())) {
-                return t;
+        for (LambdaFunction f : getFunctions()) {
+            System.out.println(f.getLabelSet());
+            if (label.matches(f.getLabelSet())) {
+                return f;
             }
         }
         return null;
-    }
-
-    @Nonnull
-    public List<LambdaFunction> getFunctions() {
-        return functions != null ? functions : Collections.<LambdaFunction> emptyList();
     }
 
     @Override
@@ -326,10 +289,8 @@ public class LambdaCloud extends Cloud {
 
         try {
             LOGGER.debug("Asked to provision {} node(s) for: {}", excessWorkload, label);
-
-
-            //final LambdaFunction function = getFunction(label);
-            final LambdaFunction function = new LambdaFunction(this.functionName, label.getName());
+            final LambdaFunction function = getFunction(label);
+            // final LambdaFunction function = new LambdaFunction(this.functionName, label.getName());
 
             for (int i = 1; i <= excessWorkload; i++) {
                 // String agentName = name + "-" + label.getName() + "-" + RandomStringUtils.random(5, "bcdfghjklmnpqrstvwxz0123456789");
@@ -340,7 +301,7 @@ public class LambdaCloud extends Cloud {
                     new NodeProvisioner.PlannedNode(
                         nodeName,
                         Computer.threadPoolForRemoting.submit(
-                            new ProvisioningCallback(this, function, nodeName)
+                            new ProvisioningCallback(this, function, nodeName, label.getName())
                         ),
                         1
                     )
@@ -359,16 +320,18 @@ public class LambdaCloud extends Cloud {
         private final LambdaCloud cloud;
         private final LambdaFunction function;
         private final String nodeName;
+        private final String label;
 
-        ProvisioningCallback(LambdaCloud cloud, LambdaFunction function, String nodeName) {
+        ProvisioningCallback(LambdaCloud cloud, LambdaFunction function, String nodeName, String label) {
             this.cloud = cloud;
             this.function = function;
             this.nodeName = nodeName;
+            this.label = label;
         }
 
         public Node call() throws Exception {
-            LambdaComputerLauncher launcher = new LambdaComputerLauncher(cloud);
-            LambdaNode agent = new LambdaNode(cloud, nodeName, launcher);
+            LambdaComputerLauncher launcher = new LambdaComputerLauncher(cloud, function);
+            LambdaNode agent = new LambdaNode(cloud, label, nodeName, launcher);
             Jenkins.getActiveInstance().addNode(agent);
             return agent;
         }

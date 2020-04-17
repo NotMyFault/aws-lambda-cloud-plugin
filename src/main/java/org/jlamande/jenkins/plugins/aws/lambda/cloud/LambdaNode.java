@@ -28,31 +28,32 @@ class LambdaNode extends AbstractCloudSlave {
     private final transient LambdaCloud cloud;
 
     /**
-    * Creates a new LambdaNode node that provisions a
-    * {@link LambdaComputer}.
-    *
-    * @param cloud    a {@link LambdaCloud} object.
-    * @param name     the name of the agent.
-    * @param launcher a {@link hudson.slaves.ComputerLauncher} object.
-    * @throws hudson.model.Descriptor.FormException if any.
-    * @throws java.io.IOException                   if any.
-    */
-    public LambdaNode(@Nonnull LambdaCloud cloud, @Nonnull String name, @Nonnull ComputerLauncher launcher)
+     * Creates a new LambdaNode node that provisions a
+     * {@link LambdaComputer}.
+     *
+     * @param cloud    a {@link LambdaCloud} object.
+     * @param name     the label of the agent.
+     * @param name     the name of the agent.
+     * @param launcher a {@link hudson.slaves.ComputerLauncher} object.
+     * @throws hudson.model.Descriptor.FormException if any.
+     * @throws java.io.IOException                   if any.
+     */
+    public LambdaNode(@Nonnull LambdaCloud cloud, @Nonnull String label, @Nonnull String name, @Nonnull ComputerLauncher launcher)
         throws Descriptor.FormException, IOException {
         // TODO : review
         // - mode : Mode.NORMAL, Mode.EXCLUSIVE
         // - timeout
         // https://javadoc.jenkins.io/hudson/slaves/CloudSlaveRetentionStrategy.html
-        super(name, "AWS Lambda Agent", "/tmp", 1, Mode.NORMAL, cloud.getLabel(), launcher,
+        super(name, "AWS Lambda Agent", "/tmp", 1, Mode.NORMAL, label, launcher,
             new CloudRetentionStrategy(cloud.getAgentTimeout() / 60), Collections.emptyList());
         this.cloud = cloud;
     }
 
     /**
-    * Get the cloud instance associated with this agent
-    *
-    * @return a {@link LambdaCloud} object.
-    */
+     * Get the cloud instance associated with this agent
+     *
+     * @return a {@link LambdaCloud} object.
+     */
     public LambdaCloud getCloud() {
         return cloud;
     }

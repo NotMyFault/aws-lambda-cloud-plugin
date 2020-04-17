@@ -13,14 +13,6 @@
     <f:select />
   </f:entry>
 
-  <f:entry field="functionName" title="${%Function Name}">
-    <f:select />
-  </f:entry>
-
-  <f:entry field="label" title="${%Label}">
-    <f:textbox />
-  </f:entry>
-
   <f:advanced>
     <f:entry field="jenkinsUrl" title="${%Alternative Jenkins URL}">
       <f:textbox />
@@ -30,5 +22,15 @@
       <f:number default="${descriptor.defaultAgentTimeout}" />
     </f:entry>
   </f:advanced>
+
+  <f:entry title="${%AWS Lambda Functions}">
+      <f:repeatableProperty field="functions" >
+        <f:entry title="">
+          <div align="right">
+            <f:repeatableDeleteButton />
+          </div>
+        </f:entry>
+      </f:repeatableProperty>
+    </f:entry>
 
 </j:jelly>

@@ -36,6 +36,8 @@ public class LambdaComputerLauncher extends JNLPLauncher {
 
     private final LambdaCloud cloud;
 
+    private final LambdaFunction function;
+
     private boolean launched;
 
     /**
@@ -43,9 +45,10 @@ public class LambdaComputerLauncher extends JNLPLauncher {
     *
     * @param cloud a {@link LambdaCloud} object.
     */
-    public LambdaComputerLauncher(LambdaCloud cloud) {
+    public LambdaComputerLauncher(LambdaCloud cloud, LambdaFunction function) {
         super();
         this.cloud = cloud;
+        this.function = function;
     }
 
     /** {@inheritDoc} */
@@ -83,7 +86,7 @@ public class LambdaComputerLauncher extends JNLPLauncher {
         LOGGER.info("[AWS Lambda Cloud]: Launching {} with {}", computer, listener);
         // LambdaComputer cbcpu = (LambdaComputer) computer;
         InvokeRequest request = new InvokeRequest()
-            .withFunctionName(cloud.getFunctionName())
+            .withFunctionName(function.getFunctionName())
             .withPayload(buildPayload(computer))
             .withLogType(LogType.Tail)
             .withInvocationType(InvocationType.Event);

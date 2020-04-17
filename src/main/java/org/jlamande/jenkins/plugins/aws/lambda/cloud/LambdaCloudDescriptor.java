@@ -6,12 +6,16 @@ import com.amazonaws.services.lambda.AWSLambda;
 import com.amazonaws.services.lambda.model.ListFunctionsRequest;
 import com.amazonaws.services.lambda.model.ListFunctionsResult;
 import com.cloudbees.jenkins.plugins.awscredentials.AWSCredentialsHelper;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import hudson.model.Descriptor;
+import hudson.model.Item;
 import hudson.slaves.Cloud;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,9 +46,20 @@ public class LambdaCloudDescriptor extends Descriptor<Cloud> {
         return LambdaCloud.getDefaultAgentTimeout();
     }
 
-    // TODO: fix as reviewed
-    public ListBoxModel doFillCredentialsIdItems() {
-        return AWSCredentialsHelper.doFillCredentialsIdItems(Jenkins.getActiveInstance());
+    public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item item, @QueryParameter String credentialsId) {
+        StandardListBoxModel result = new StandardListBoxModel();
+        if (item == null) {
+            if (!Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
+                return result.includeCurrentValue(credentialsId);
+            }
+        } else {
+            if (!item.hasPermission(Item.EXTENDED_READ)
+                && !item.hasPermission(CredentialsProvider.USE_ITEM)) {
+                return result.includeCurrentValue(credentialsId);
+            }
+        }
+        result = (StandardListBoxModel) AWSCredentialsHelper.doFillCredentialsIdItems(Jenkins.getActiveInstance());
+        return result.includeCurrentValue(credentialsId);
     }
 
     public ListBoxModel doFillRegionItems() {
@@ -91,7 +106,7 @@ public class LambdaCloudDescriptor extends Descriptor<Cloud> {
         } catch (RuntimeException e) {
             // missing credentials will throw an "AmazonClientException: Unable to load AWS
             // credentials from any provider in the chain"
-            LOGGER.error("[AWS Lambda Cloud]: Exception listing functions (region={})", region, e);
+            LOGGER.error("[AWS Lambda Cloud]: Exception listing functions (region={}, credentialsId={})", region, credentialsId, e);
             return new ListBoxModel();
         }
     }

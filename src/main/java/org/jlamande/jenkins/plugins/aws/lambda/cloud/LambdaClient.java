@@ -45,10 +45,7 @@ public class LambdaClient {
 
             AmazonWebServicesCredentials credentials = getCredentials(credentialsId);
             if (credentials != null) {
-                String awsAccessKeyId = credentials.getCredentials().getAWSAccessKeyId();
-                String obfuscatedAccessKeyId = StringUtils.left(awsAccessKeyId, 4)
-                    + StringUtils.repeat("*", awsAccessKeyId.length() - 8) + StringUtils.right(awsAccessKeyId, 4);
-                LOGGER.debug("[AWS Lambda Cloud]: Using credentials: {}", obfuscatedAccessKeyId);
+                LOGGER.debug("[AWS Lambda Cloud]: Using credentials: {}", credentialsId);
                 builder.withCredentials(credentials);
             }
             LOGGER.debug("[AWS Lambda Cloud]: Selected Region: {}", region);

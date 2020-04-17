@@ -1,11 +1,21 @@
 package org.jlamande.jenkins.plugins.aws.lambda.cloud;
 
+import com.amazonaws.services.lambda.model.ListFunctionsRequest;
+import com.amazonaws.services.lambda.model.ListFunctionsResult;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import hudson.Extension;
+import hudson.RelativePath;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import hudson.model.Item;
 import hudson.model.Label;
 import hudson.model.labels.LabelAtom;
+import hudson.util.ListBoxModel;
+import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,14 +23,20 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.jlamande.jenkins.plugins.aws.lambda.cloud.LambdaCloud.getDefaultRegion;
 
 public class LambdaFunction extends AbstractDescribableImpl<LambdaFunction> implements Serializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LambdaCloud.class);
 
     /**
-     * Function Name or Arn
+     * Function Name (same account)
      */
     @Nonnull
     private final String functionName;
@@ -33,6 +49,11 @@ public class LambdaFunction extends AbstractDescribableImpl<LambdaFunction> impl
     @CheckForNull
     private final String label;
 
+    /**
+     *
+     * @param functionName   the name of the AWS Lambda function to build from.
+     * @param label
+     */
     @DataBoundConstructor
     public LambdaFunction(@Nonnull String functionName,
                            @Nullable String label) {
@@ -40,30 +61,31 @@ public class LambdaFunction extends AbstractDescribableImpl<LambdaFunction> impl
         this.label = label;
     }
 
+    public String getFunctionName() {return functionName; }
+
+    /**
+     * Getter for the field <code>label</code>.
+     *
+     * @return a {@link String} object.
+     */
+    @Nonnull
     public String getLabel() {
-        return label;
+        return StringUtils.defaultIfBlank(label, "");
     }
 
     public Set<LabelAtom> getLabelSet() {
         return Label.parse(label);
     }
 
-    public String getDisplayName() {
-        return "Lambda Agent " + label;
-    }
-
     @Extension
     public static class DescriptorImpl extends Descriptor<LambdaFunction> {
-
-        private static String TEMPLATE_NAME_PATTERN = "[a-z|A-Z|0-9|_|-]{1,127}";
 
         @Override
         public String getDisplayName() {
             return Messages.function();
         }
 
-        /*
-        public ListBoxModel doFillFunctionNameItems(@QueryParameter String credentialsId, @QueryParameter String region) {
+        public ListBoxModel doFillFunctionNameItems(@QueryParameter @RelativePath("..") String credentialsId, @QueryParameter @RelativePath("..") String region) {
             if (StringUtils.isBlank(region)) {
                 region = getDefaultRegion();
                 if (StringUtils.isBlank(region)) {
@@ -75,14 +97,15 @@ public class LambdaFunction extends AbstractDescribableImpl<LambdaFunction> impl
                 final List<String> functions = new ArrayList<String>();
                 String lastToken = null;
                 do {
-                    ListFunctionsResult result = LambdaCloud.getClient()
+                    ListFunctionsResult result = LambdaClient.buildClient(credentialsId, region)
                         .listFunctions(new ListFunctionsRequest().withMarker(lastToken));
                     //functions.addAll(result.getFunctions().stream().map(f -> f.getFunctionArn()).collect(Collectors.toList()));
                     functions.addAll(result.getFunctions().stream().map(f -> f.getFunctionName()).collect(Collectors.toList()));
                     lastToken = result.getNextMarker();
                 } while (lastToken != null);
                 Collections.sort(functions);
-                final ListBoxModel options = new ListBoxModel();
+                final StandardListBoxModel options = new StandardListBoxModel();
+                options.includeEmptyValue();
                 for (final String arn : functions) {
                     options.add(arn);
                 }
@@ -93,6 +116,6 @@ public class LambdaFunction extends AbstractDescribableImpl<LambdaFunction> impl
                 LOGGER.error("[AWS Lambda Cloud]: Exception listing functions (region={})", region, e);
                 return new ListBoxModel();
             }
-        }*/
+        }
     }
 }
