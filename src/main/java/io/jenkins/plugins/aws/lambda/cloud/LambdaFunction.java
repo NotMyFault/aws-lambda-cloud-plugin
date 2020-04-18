@@ -54,7 +54,7 @@ public class LambdaFunction extends AbstractDescribableImpl<LambdaFunction> impl
     /**
      *
      * @param functionName   the name of the AWS Lambda function to build from.
-     * @param label
+     * @param label the label used to identify this agent(node) in Jenkins.
      */
     @DataBoundConstructor
     public LambdaFunction(@Nonnull String functionName,

@@ -41,10 +41,11 @@ public class LambdaComputerLauncher extends JNLPLauncher {
     private boolean launched;
 
     /**
-    * Constructor for LambdaComputerLauncher.
-    *
-    * @param cloud a {@link LambdaCloud} object.
-    */
+     * Constructor for LambdaComputerLauncher.
+     *
+     * @param cloud a {@link LambdaCloud} object.
+     * @param function lambda function to launch
+     */
     public LambdaComputerLauncher(LambdaCloud cloud, LambdaFunction function) {
         super();
         this.cloud = cloud;
