@@ -1,6 +1,8 @@
 # AWS Lambda Cloud Plugin for Jenkins
 
 [![Build Status](https://ci.jenkins.io/job/Plugins/job/aws-lambda-cloud-plugin/job/master/badge/icon)](https://ci.jenkins.io/job/Plugins/job/aws-lambda-cloud-plugin/job/master/)
+[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/aws-lambda-cloud.svg)](https://plugins.jenkins.io/aws-lambda-cloud)
+[![GitHub release](https://img.shields.io/github/release/jenkinsci/aws-lambda-cloud-plugin.svg?label=changelog)](https://github.com/jenkinsci/aws-lambda-cloud-plugin/releases/latest)
 
 ## About
 
