@@ -1,6 +1,7 @@
 package io.jenkins.plugins.aws.lambda.cloud;
 
 import hudson.model.Executor;
+import hudson.model.Node;
 import hudson.model.Queue;
 import hudson.slaves.AbstractCloudComputer;
 
@@ -71,7 +72,10 @@ public class LambdaComputer extends AbstractCloudComputer<LambdaNode> {
             LOGGER.info("[AWS Lambda Cloud]: [{}]: Terminating agent after task.", this);
             try {
                 // Thread.sleep(500);
-                Jenkins.getActiveInstance().removeNode(getNode());
+                Node node = getNode();
+                if(node != null) {
+                    Jenkins.getActiveInstance().removeNode(node);
+                }
             } catch (Exception e) {
                 LOGGER.warn("[AWS Lambda Cloud]: [{}]: Termination error: {}", this, e.getClass());
             }

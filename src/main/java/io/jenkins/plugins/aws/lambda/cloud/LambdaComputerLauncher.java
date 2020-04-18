@@ -151,15 +151,22 @@ public class LambdaComputerLauncher extends JNLPLauncher {
     @Override
     public void beforeDisconnect(@Nonnull SlaveComputer computer, @Nonnull TaskListener listener) {
         if (computer instanceof LambdaComputer) {
-            LOGGER.error("Before disconnecting node: {}", computer.getNode().getDisplayName());
-            // ((LambdaComputer) computer).setBuildId(null);
+            Node node = computer.getNode();
+            if(node != null) {
+                LOGGER.error("Before disconnecting node: {}", node.getDisplayName());
+                // ((LambdaComputer) computer).setBuildId(null);
+            }
         }
     }
 
     private String buildPayload(@Nonnull SlaveComputer computer) {
-        Node n = computer.getNode();
+        String displayName = "";
+        Node node = computer.getNode();
+        if(node != null) {
+            displayName = node.getDisplayName();
+        }
         // TODO: use an object and JSON serialization
-        String payload = String.format("{\"url\": \"%s\", \"node_secret\": \"%s\", \"node_name\": \"%s\"}", cloud.getJenkinsUrl(), computer.getJnlpMac(), n.getDisplayName());
+        String payload = String.format("{\"url\": \"%s\", \"node_secret\": \"%s\", \"node_name\": \"%s\"}", cloud.getJenkinsUrl(), computer.getJnlpMac(), displayName);
         return payload;
     }
 

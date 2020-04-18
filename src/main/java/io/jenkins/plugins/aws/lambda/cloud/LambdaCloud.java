@@ -298,7 +298,7 @@ public class LambdaCloud extends Cloud {
                     new NodeProvisioner.PlannedNode(
                         nodeName,
                         Computer.threadPoolForRemoting.submit(
-                            new ProvisioningCallback(this, function, nodeName, label.getName())
+                            new LambdaCloudProvisioningCallback(this, function, nodeName, label.getName())
                         ),
                         1
                     )
@@ -310,28 +310,6 @@ public class LambdaCloud extends Cloud {
             LOGGER.warn("Failed to provision Lambda node", e);
         }
         return Collections.emptyList();
-    }
-
-    private class ProvisioningCallback implements Callable<Node> {
-
-        private final LambdaCloud cloud;
-        private final LambdaFunction function;
-        private final String nodeName;
-        private final String label;
-
-        ProvisioningCallback(LambdaCloud cloud, LambdaFunction function, String nodeName, String label) {
-            this.cloud = cloud;
-            this.function = function;
-            this.nodeName = nodeName;
-            this.label = label;
-        }
-
-        public Node call() throws Exception {
-            LambdaComputerLauncher launcher = new LambdaComputerLauncher(cloud, function);
-            LambdaNode agent = new LambdaNode(cloud, label, nodeName, launcher);
-            Jenkins.getActiveInstance().addNode(agent);
-            return agent;
-        }
     }
 
     @Extension
