@@ -18,6 +18,8 @@ bin/
 .project
 .settings/
 pom.xml.versionsBackup
+pom.xml.releaseBackup
+release.properties
 .factorypath
 
 # VS Code
