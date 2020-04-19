@@ -21,21 +21,62 @@ Given the limitations of the AWS Lambda engine :
 - jobs can't exceed a duration of 15 minutes
 - jobs can't use more than 512 MB of storage
 
-## No delay provisioning
-
-By default Jenkins do estimate load to avoid over-provisioning of cloud nodes.
-This plugin will use its own provisioning strategy by default, with this strategy, a new node is created on Lambda as soon as NodeProvisioner detects need for more agents.
-In worse scenarios, this will results in some extra nodes provisioned on Lambda, which will be shortly terminated.
-
-If you want to turn off this Strategy you can set SystemProperty `io.jenkins.plugins.aws.lambda.cloud.lambdaCloudProvisionerStrategy.disable=true`
-
 ## How-to
 
 ### Deploy a Lambda Agent
 
 [View details](./agent/README.md)
 
-### Configure this plugin as code
+### Configure a Lambda Agent in Jenkins
+
+*Supposing you already deployed Lambda agents*
+
+#### Requirements
+
+You will have to create AWS Credentials in Jenkins unless your Jenkins is running as an AWS Resource (ECS task, EKS pod, EC2 instance).
+
+Those credentials will match an IAM User or a IAM Role which will need to have the following permissions :
+```yml
+Version: '2012-10-17'
+Statement:
+  - Effect: Allow
+    Action:
+      - lambda:ListFunctions
+    Resource:
+      - "*"
+  - Effect: Allow
+    Action:
+      - lambda:InvokeFunction
+    Resource:
+      - "*"
+```
+
+See below in the "Advanced Configuration" part for finer-grained IAM permissions.
+
+#### Manually
+
+1. Install this plugin
+2. Go the Cloud configuration
+   1. on older Jenkins versions, go at the bottom of `/configure` page
+   2. on more recent Jenkins versions, go to the `/configureClouds` page
+3. Add a Cloud of type **AWS Lambda Cloud**
+![add cloud](./doc/add_cloud.png)
+4. Configure the cloud
+   1. use AWS Credentials or let is empty if your Jenkins is running in an AWS Context
+   2. configure the region
+   3. optional: configure the Jenkins URL (will default to Jenkins URL) in cases where your need internal communications. The Lambda functions must be able to reach thsi URL.
+   4. Agent connection timeout : The time in seconds to wait before giving up on an agent connection (typically idle agent).
+5. Add a Lambda Function
+   1. Set a label (to reuse in your jobs/pipelines)
+   2. Select the Function Name (the list is dynamically retrieved from AWS)
+![configure cloud](./doc/configure_function.png)
+6. Add as much functions as you need (type, tools, size, ...)
+
+*If you need to declare functions in other contexts (credentials, regions, ...), you will have to create another Cloud.*
+
+#### As code
+
+*using basic groovy script*
 
 Basic configuration using default credentials and default region if Jenkins is running as an ECS task or an EC2 instance with 2 samples lambdas :
 - `jnlp-lambdas-v1-agentGitBash` with label `lambda-git`
@@ -56,3 +97,59 @@ c.setFunctions([f, f2]);
 jenkins.clouds.add(c);
 jenkins.save()
 ```
+
+### Advanced Configuration
+
+#### IAM permissions of Jenkins
+
+It is a good practice to restrict the permissions on your Jenkins and allow it to execute only the functions that you have planned it to use. A nice way to do it would be tag your Lambda functions and apply IAM restrictions by conditions on those tags. Unfortunately, AWS Lambda does not support **Authorization based on tags** <https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_aws-services-that-work-with-iam.html>. So to apply fine grain permissions, we will need to use the names of the functions.
+
+In the deployment sample (serverless), all lambdas are deployed with `jnlp-lambdas` prefix.
+
+So to limit the invocation permissions of Jenkins to only those Lambda functions, we can use this policy :
+
+```yml
+Version: '2012-10-17'
+Statement:
+  - Effect: Allow
+    Action:
+      - lambda:ListFunctions
+    Resource:
+      - "*"
+  - Effect: Allow
+    Action:
+      - lambda:InvokeFunction
+    Resource:
+      - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:jnlp-lambdas-*"
+```
+
+*this is the Cloudformation compatible format of an IAM Policy. Replace `!Sub`, `${AWS::Region}` and `${AWS::AccountId}` if needed.*
+
+## No delay provisioning
+
+By default Jenkins do estimate load to avoid over-provisioning of cloud nodes.
+This plugin will use its own provisioning strategy by default, with this strategy, a new node is created on Lambda as soon as NodeProvisioner detects need for more agents.
+In worse scenarios, this will results in some extra nodes provisioned on Lambda, which will be shortly terminated.
+
+If you want to turn off this Strategy you can set SystemProperty `io.jenkins.plugins.aws.lambda.cloud.lambdaCloudProvisionerStrategy.disable=true`
+
+## Troubleshooting
+
+### My Job/Pipeline is stuck on `‘Jenkins’ doesn’t have label xxxxx`
+
+1. check that you have defined the label `xxxxx` in one of your Lambda Function. You can provide a list of labels for the same function **separated by whitespaces** (not commas).
+2. Check the Jenkins logs or Lambda Agent Logs (see below)
+
+### Jenkins Logs
+
+Depending on your system, you can consult logs :
+- on the `/log/all` url
+- or configure a recorder on the `io.jenkins.plugins.aws.lambda.cloud` package with at least INFO level
+
+If you see errors like `is not authorized to perform: lambda:InvokeFunction on resource:`, check the permissions of the credentials you set on the cloud (explicitly or implicitly).
+
+### Lambda Agents logs
+
+Look at the Cloudwatch console.
+
+TO COME : a build wrapper to give you a quick access to the lambda log group/stream of execution.
