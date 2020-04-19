@@ -33,7 +33,9 @@ Given the limitations of the AWS Lambda engine :
 
 #### Requirements
 
-You will have to create AWS Credentials in Jenkins unless your Jenkins is running as an AWS Resource (ECS task, EKS pod, EC2 instance).
+Jenkins will need to be allowed to invoke Lambda Functions. So you must : 
+- configure AWS Credentials in Jenkins using the [CloudBees AWS Credentials plugin](https://plugins.jenkins.io/aws-credentials/) 
+- unless your Jenkins is running as an AWS Resource (ECS task, EKS pod, EC2 instance)
 
 Those credentials will match an IAM User or a IAM Role which will need to have the following permissions :
 ```yml
