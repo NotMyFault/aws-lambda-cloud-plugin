@@ -24,3 +24,6 @@ release.properties
 
 # VS Code
 .vscode
+
+# serverless
+.serverless
