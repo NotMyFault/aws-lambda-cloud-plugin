@@ -31,9 +31,15 @@ If you want to turn off this Strategy you can set SystemProperty `io.jenkins.plu
 
 ## How-to
 
+### Deploy a Lambda Agent
+
+[View details](./agent/README.md)
+
 ### Configure this plugin as code
 
-Simple configuration using default credentials and default region if Jenkins is running as an ECS task or an EC2 instance :
+Basic configuration using default credentials and default region if Jenkins is running as an ECS task or an EC2 instance with 2 samples lambdas :
+- `jnlp-lambdas-v1-agentGitBash` with label `lambda-git`
+- `jnlp-lambdas-v1-agentGitBashNode` with label `lambda-node`
 
 ```groovy
 import io.jenkins.plugins.aws.lambda.cloud.LambdaCloud;
@@ -43,10 +49,10 @@ import jenkins.model.Jenkins
 
 jenkins = jenkins.model.Jenkins.get()
 
-println "Configure Lambda Cloud"
 c = new LambdaCloud("aws-lambdas", null, '')
-f = new LambdaFunction('lambda-jnlp-agent', "test");
-c.setFunctions([f]);
+f = new LambdaFunction('jnlp-lambdas-v1-agentGitBash', "lambda-git");
+f2 = new LambdaFunction('jnlp-lambdas-v1-agentGitBashNode', "lambda-node");
+c.setFunctions([f, f2]);
 jenkins.clouds.add(c);
 jenkins.save()
 ```
