@@ -4,6 +4,7 @@
 [![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/aws-lambda-cloud.svg)](https://plugins.jenkins.io/aws-lambda-cloud)
 [![GitHub release](https://img.shields.io/github/release/jenkinsci/aws-lambda-cloud-plugin.svg?label=changelog)](https://github.com/jenkinsci/aws-lambda-cloud-plugin/releases/latest)
 ![CI Status](https://github.com/jenkinsci/aws-lambda-cloud-plugin/workflows/CI/badge.svg)
+![License][license-image-mit]
 
 ## About
 
