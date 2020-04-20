@@ -23,7 +23,7 @@ Given the limitations of the AWS Lambda engine :
 
 ## Requirements
 
-- Jenkins with at least version 1.635
+- Jenkins with at least version 1.635 (beware of using Lambda agents with the remoting library compatible with your jenkins)
 - an AWS Account
 
 ### Jenkins Required Configuration
