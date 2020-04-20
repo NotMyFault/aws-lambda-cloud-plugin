@@ -119,7 +119,7 @@ jenkins.save()
 
 It is a good practice to restrict the permissions on your Jenkins and allow it to execute only the functions that you have planned it to use. A nice way to do it would be tag your Lambda functions and apply IAM restrictions by conditions on those tags. Unfortunately, AWS Lambda does not support **Authorization based on tags** <https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_aws-services-that-work-with-iam.html>. So to apply fine grain permissions, we will need to use the names of the functions.
 
-In the deployment sample (serverless), all lambdas are deployed with `jnlp-lambdas` prefix.
+In the deployment sample (serverless), all lambdas are deployed with `jnlp-agent` prefix.
 
 So to limit the invocation permissions of Jenkins to only those Lambda functions, we can use this policy :
 
@@ -135,7 +135,7 @@ Statement:
     Action:
       - lambda:InvokeFunction
     Resource:
-      - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:jnlp-lambdas-*"
+      - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:jnlp-agent-*"
 ```
 
 *this is the Cloudformation compatible format of an IAM Policy. Replace `!Sub`, `${AWS::Region}` and `${AWS::AccountId}` if needed.*
