@@ -74,14 +74,13 @@ See below in the "Advanced Configuration" part for finer-grained IAM permissions
 2. Go the Cloud configuration
    1. on older Jenkins versions, go at the bottom of `/configure` page
    2. on more recent Jenkins versions, go to the `/configureClouds` page
-3. Add a Cloud of type **AWS Lambda Cloud**
-<img src="./doc/add_cloud.png" width="250">
-1. Configure the cloud
+3. Add a Cloud of type **AWS Lambda Cloud** <img src="./doc/add_cloud.png" width="250">
+4. Configure the cloud
    1. use AWS Credentials or let is empty if your Jenkins is running in an AWS Context
    2. configure the region
    3. optional: configure the Jenkins URL (will default to Jenkins URL) in cases where your need internal communications. The Lambda functions must be able to reach thsi URL.
    4. Agent connection timeout : The time in seconds to wait before giving up on an agent connection (typically idle agent).
-2. Add a Lambda Function
+5. Add a Lambda Function
    1. Set a label (to reuse in your jobs/pipelines)
    2. Select the Function Name (the list is dynamically retrieved from AWS)
 ![configure cloud](./doc/configure_function.png)
