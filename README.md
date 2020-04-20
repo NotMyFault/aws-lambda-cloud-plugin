@@ -75,7 +75,7 @@ See below in the "Advanced Configuration" part for finer-grained IAM permissions
    1. on older Jenkins versions, go at the bottom of `/configure` page
    2. on more recent Jenkins versions, go to the `/configureClouds` page
 3. Add a Cloud of type **AWS Lambda Cloud**
-![add cloud](./doc/add_cloud.png | width=250)
+![add cloud](./doc/add_cloud.png)
 4. Configure the cloud
    1. use AWS Credentials or let is empty if your Jenkins is running in an AWS Context
    2. configure the region
