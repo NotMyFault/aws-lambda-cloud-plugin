@@ -21,6 +21,10 @@ Given the limitations of the AWS Lambda engine :
 - jobs can't exceed a duration of 15 minutes
 - jobs can't use more than 512 MB of storage
 
+## Jenkins Required Configuration
+
+**IMPORTANT** : Jenkins will by default mark as unavailable any agent with low space disk or low temp space. Given the  space of 512MB available in the writable temp filesystem of Lambdas, you must adapt or disable this behavior under the "Nodes Configuration" section of your Jenkins (url: `/computer/configure`).
+
 ## How-to
 
 ### Deploy a Lambda Agent
@@ -81,8 +85,8 @@ See below in the "Advanced Configuration" part for finer-grained IAM permissions
 *using basic groovy script*
 
 Basic configuration using default credentials and default region if Jenkins is running as an ECS task or an EC2 instance with 2 samples lambdas :
-- `jnlp-lambdas-v1-agentGitBash` with label `lambda-git`
-- `jnlp-lambdas-v1-agentGitBashNode` with label `lambda-node`
+- `jnlp-agent-git-bash` with label `lambda-git`
+- `jnlp-agent-git-bash-node` with label `lambda-node`
 
 ```groovy
 import io.jenkins.plugins.aws.lambda.cloud.LambdaCloud;
@@ -93,8 +97,8 @@ import jenkins.model.Jenkins
 jenkins = jenkins.model.Jenkins.get()
 
 c = new LambdaCloud("aws-lambdas", null, '')
-f = new LambdaFunction('jnlp-lambdas-v1-agentGitBash', "lambda-git");
-f2 = new LambdaFunction('jnlp-lambdas-v1-agentGitBashNode', "lambda-node");
+f = new LambdaFunction('jnlp-agent-git-bash', "lambda-git");
+f2 = new LambdaFunction('jnlp-agent-git-bash-node', "lambda-node");
 c.setFunctions([f, f2]);
 jenkins.clouds.add(c);
 jenkins.save()
@@ -141,6 +145,10 @@ If you want to turn off this Strategy you can set SystemProperty `io.jenkins.plu
 
 1. check that you have defined the label `xxxxx` in one of your Lambda Function. You can provide a list of labels for the same function **separated by whitespaces** (not commas).
 2. Check the Jenkins logs or Lambda Agent Logs (see below)
+
+### My Lambda Agents are marked as unavailable
+
+Look above at the important notice in "Jenkins Required Configuration".
 
 ### Jenkins Logs
 

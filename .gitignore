@@ -27,3 +27,5 @@ release.properties
 
 # serverless
 .serverless
+# sam
+.aws-sam
