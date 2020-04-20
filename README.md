@@ -21,15 +21,24 @@ Given the limitations of the AWS Lambda engine :
 - jobs can't exceed a duration of 15 minutes
 - jobs can't use more than 512 MB of storage
 
-## Jenkins Required Configuration
+## Requirements
+
+- Jenkins with at least version 1.635
+- an AWS Account
+
+### Jenkins Required Configuration
 
 **IMPORTANT** : Jenkins will by default mark as unavailable any agent with low space disk or low temp space. Given the  space of 512MB available in the writable temp filesystem of Lambdas, you must adapt or disable this behavior under the "Nodes Configuration" section of your Jenkins (url: `/computer/configure`).
+
+## Plugin install
+
+Use the Jenkins plugin manager to install the [AWS Lambda Cloud](https://plugins.jenkins.io/aws-lambda-cloud/)
 
 ## How-to
 
 ### Deploy a Lambda Agent
 
-[View details](./agent/README.md)
+See [this repository](https://github.com/jlamande/aws-lambda-jenkins-agents) on how to deploy Lambda Agents for Jenkins.
 
 ### Configure a Lambda Agent in Jenkins
 
